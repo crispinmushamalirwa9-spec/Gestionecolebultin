@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gestion scolaire – Bulletins RDC</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f3f6fa;--sf:#fff;--tx:#14213d;--mu:#5d6b82;--bd:#d3dbe8;--ac:#0a4fa3;--ac2:#f5c400;--rd:#c8102e;--ok:#1b7a3d;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1522;--sf:#172236;--tx:#e8eef9;--mu:#9aa9c2;--bd:#2a3a58;--ac:#6aa8ff;--ac2:#f5c400;--rd:#ff6b7f;--ok:#5fd68a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1522;--sf:#172236;--tx:#e8eef9;--mu:#9aa9c2;--bd:#2a3a58;--ac:#6aa8ff;--ac2:#f5c400;--rd:#ff6b7f;--ok:#5fd68a;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 "Trebuchet MS","Segoe UI",system-ui,sans-serif;max-width:900px;margin-inline:auto;padding-bottom:70px}
+h1{font:700 19px/1.2 Georgia,"Times New Roman",serif;margin:0}
+header{padding:14px 14px 10px;border-bottom:4px solid var(--ac2);background:var(--sf);display:flex;gap:10px;align-items:center}
+header i{width:34px;height:22px;background:linear-gradient(135deg,#007fff 38%,var(--ac2) 38% 44%,#ce1021 44% 56%,var(--ac2) 56% 62%,#007fff 62%);border-radius:2px;flex:none}
+nav{display:flex;position:sticky;top:env(safe-area-inset-top,0px);background:var(--sf);border-bottom:1px solid var(--bd);z-index:5}
+nav button{flex:1;padding:11px 4px;border:0;background:none;color:var(--mu);font:600 14px inherit;border-bottom:3px solid transparent}
+nav button.on{color:var(--ac);border-bottom-color:var(--ac)}
+main{padding:12px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:12px}
+.card h2{font:700 16px Georgia,serif;margin:0 0 8px}
+label{display:block;font-size:13px;color:var(--mu);margin:8px 0 3px}
+input,select,textarea{width:100%;padding:9px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx);font:inherit}
+textarea{min-height:110px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:6px;padding:10px 14px;font:600 14px inherit;margin-top:10px}
+:root[data-theme="dark"] .btn{color:#06121f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn{color:#06121f}}
+.btn.s{background:none;color:var(--rd);border:1px solid var(--bd);padding:5px 9px;margin:0}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd)}
+.li:last-child{border:0}.li small{color:var(--mu);display:block}
+.empty{color:var(--mu);text-align:center;padding:14px}
+.br{border-top:1px solid var(--bd);padding:8px 0}
+.br b{display:flex;justify-content:space-between}
+.g{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:4px}
+.g span{font-size:11px;color:var(--mu);text-align:center;display:block}
+.g input{padding:6px 2px;text-align:center}
+.pill{background:var(--bg);border:1px solid var(--bd);border-radius:20px;padding:2px 9px;font-size:12px;color:var(--mu)}
+.sc{overflow-x:auto;border:1px solid var(--tx);background:#fff;color:#000;padding:8px}
+.bul{min-width:640px;font:11px/1.3 Georgia,serif}
+.bul h3{text-align:center;margin:0;font-size:12px}
+.bul table{width:100%;border-collapse:collapse;margin-top:6px}
+.bul td,.bul th{border:1px solid #000;padding:2px 3px;text-align:center}
+.bul td:first-child{text-align:left}
+.bul .t td{font-weight:700;background:#e6e9ef}
+.bul .inf{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;margin-top:6px}
+.ok{color:var(--ok);font-weight:700}.ko{color:var(--rd);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stats div{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px;text-align:center}
+.stats b{display:block;font:700 22px Georgia,serif;color:var(--ac)}
+.stats span{font-size:12px;color:var(--mu)}
+@media print{header,nav,.no{display:none!important}body{background:#fff}.sc{border:0;overflow:visible}}
+</style>
+</head>
+<body>
+<header><i></i><h1 id="ttl">Gestion scolaire</h1></header>
+<nav id="nav"></nav>
+<main id="m"></main>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const mk=(n,s)=>({id:uid(),name:n,b:s.split(',').map(x=>{const[a,p]=x.split(':');return[a.trim(),+p]})});
+const SCI="Biologie générale:20,Microbiologie:10,Géologie:10,Chimie:30,Physique:30,Techn. info & com. TIC:10,Anglais:30,Français:50,Éd. civique et morale:20,Géographie:20,Histoire:20,Éducation à la vie:10,Religion:20,Éducation physique:10";
+const SEED=()=>[
+mk("7e EB (CTEB)","Arithmétique:10,Statistique:10,Géométrie:20,Algèbre:40,Anatomie:10,Botanique:10,Zoologie:10,Sciences physiques:10,Technologie:10,Techn. info & com. TIC:10,Anglais:30,Français:70,Religion:20,Éducation à la vie:20,Éd. civique et morale:20,Géographie:20,Histoire:20,Dessin:20,Musique:20,Éducation physique:20"),
+mk("8e EB (CTEB)","Arithmétique:10,Statistique:10,Géométrie:20,Algèbre:40,Anatomie:10,Botanique:10,Nutrition:10,Zoologie:20,Chimie:10,Sciences physiques:10,Technologie:10,Techn. info & com. TIC:10,Anglais:30,Français:50,Religion:20,Éducation à la vie:20,Éd. civique et morale:20,Histoire:20,Géographie:30,Dessin:20,Musique:20,Éducation physique:20"),
+mk("1re Humanités Scientifiques","Algèbre et statistique:30,Géométrie et trigonométrie:20,Dessin scientifique:10,"+SCI+",Sociologie africaine:20"),
+mk("2e Humanités Scientifiques","Algèbre et statistique:30,Géométrie et trigonométrie:20,Dessin scientifique:10,Statistique:10,"+SCI+",Économie politique:20"),
+mk("3e Humanités Scientifiques","Algèbre et analyse:30,Géométrie:20,Trigonométrie statistique:10,Dessin scientifique:10,"+SCI+",Écologie:20,Esthétique:20"),
+mk("4e Humanités Scientifiques","Algèbre et analyse:30,Géométrie:20,Probabilité:10,Dessin scientifique:10,"+SCI+",Écologie:20,Philosophie:20")];
+let db;
+try{db=JSON.parse(localStorage.getItem('ecole_rdc_v1'))}catch(e){}
+if(!db||!db.classes)db={school:'',year:'2025-2026',classes:SEED(),students:[],grades:{}};
+const save=()=>{try{localStorage.setItem('ecole_rdc_v1',JSON.stringify(db))}catch(e){}};
+let tab='el',selC=db.classes[0].id,selS='';
+const TABS=[['el','Élèves'],['no','Notes'],['bu','Bulletin'],['cl','Classes']];
+const cls=id=>db.classes.find(c=>c.id===id);
+const stu=id=>db.students.find(s=>s.id===id);
+const inC=id=>db.students.filter(s=>s.classId===id);
+const G=(s,i)=>(db.grades[s]&&db.grades[s][i])||[];
+const num=v=>(v===''||v==null||isNaN(v))?null:+v;
+const sum=a=>{const n=a.map(num).filter(x=>x!==null);return n.length?n.reduce((x,y)=>x+y,0):null};
+const mx=P=>[P,P,2*P,P,P,2*P];
+function tot(sid,c){let t=0,any=false;c.b.forEach((b,i)=>{const s=sum(G(sid,i));if(s!==null){t+=s;any=true}});return any?t:null}
+const maxG=c=>8*c.b.reduce((a,b)=>a+b[1],0);
+const pct=(sid,c)=>{const t=tot(sid,c);return t===null?null:t/maxG(c)*100};
+function rank(sid,c){const t=tot(sid,c);if(t===null)return'';const all=inC(c.id).map(s=>tot(s.id,c)).filter(x=>x!==null);return(1+all.filter(x=>x>t).length)+' / '+all.length}
+function drawNav(){$('#nav').innerHTML=TABS.map(t=>`<button class="${tab===t[0]?'on':''}" onclick="tab='${t[0]}';draw()">${t[1]}</button>`).join('');$('#ttl').textContent=db.school||'Gestion scolaire'}
+const opts=(list,sel)=>list.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.name)}</option>`).join('');
+function draw(){drawNav();({el:vEl,no:vNo,bu:vBu,cl:vCl})[tab]();}
+function vEl(){
+const m=$('#m');
+m.innerHTML=`<div class="stats"><div><b>${db.students.length}</b><span>Élèves</span></div><div><b>${db.classes.length}</b><span>Classes</span></div><div><b>${db.year}</b><span>Année</span></div></div>
+<div class="card"><h2>École</h2><label>Nom de l’école</label><input id="sc" value="${esc(db.school)}" placeholder="Ex. : Institut Lumière"><div class="row"><div><label>Année scolaire</label><input id="yr" value="${esc(db.year)}"></div><div><label>Province éducationnelle</label><input id="pv" value="${esc(db.prov||'')}"></div></div><button class="btn" onclick="db.school=$('#sc').value;db.year=$('#yr').value;db.prov=$('#pv').value;save();draw()">Enregistrer</button></div>
+<div class="card"><h2>Inscrire un élève</h2><label>Nom complet</label><input id="n"><div class="row"><div><label>Sexe</label><select id="sx"><option>M</option><option>F</option></select></div><div><label>N° perm.</label><input id="pm"></div></div><div class="row"><div><label>Né(e) à</label><input id="nl"></div><div><label>Le</label><input id="nd" type="date"></div></div><label>Classe</label><select id="cc">${opts(db.classes,selC)}</select><button class="btn" id="add">Ajouter l’élève</button></div>
+<div class="card"><h2>Liste des élèves</h2><div id="ls"></div></div>`;
+$('#add').onclick=()=>{const n=$('#n').value.trim();if(!n){$('#n').focus();return}
+db.students.push({id:uid(),name:n,sex:$('#sx').value,perm:$('#pm').value,born:$('#nl').value,date:$('#nd').value,classId:$('#cc').value});selC=$('#cc').value;save();draw()};
+const ls=db.classes.map(c=>({c,l:inC(c.id)})).filter(x=>x.l.length);
+$('#ls').innerHTML=ls.length?ls.map(x=>`<b>${esc(x.c.name)}</b> <span class="pill">${x.l.length}</span>`+x.l.map(s=>`<div class="li"><div>${esc(s.name)}<small>${s.sex} · ${esc(s.perm||'sans n° perm.')}</small></div><button class="btn s" onclick="delS('${s.id}')">Supprimer</button></div>`).join('')).join(''):'<div class="empty">Aucun élève. Inscrivez le premier ci-dessus.</div>'}
+function delS(id){if(!confirm('Supprimer cet élève et ses notes ?'))return;db.students=db.students.filter(s=>s.id!==id);delete db.grades[id];save();draw()}
+function pick(){return`<div class="card no"><label>Classe</label><select id="pc">${opts(db.classes,selC)}</select><label>Élève</label><select id="ps"></select></div>`}
+function bindPick(f){
+const fill=()=>{const l=inC(selC);if(!l.find(s=>s.id===selS))selS=l[0]?l[0].id:'';$('#ps').innerHTML=l.length?opts(l,selS):'<option value="">Aucun élève</option>'};
+fill();$('#pc').onchange=e=>{selC=e.target.value;selS='';fill();f()};$('#ps').onchange=e=>{selS=e.target.value;f()}}
+function vNo(){
+$('#m').innerHTML=pick()+'<div id="bx"></div>';bindPick(rNo);rNo()}
+const L=['1re P.','2e P.','Exam.','3e P.','4e P.','Exam.'];
+function rNo(){
+const c=cls(selC),s=stu(selS),bx=$('#bx');
+if(!s){bx.innerHTML='<div class="card empty">Inscrivez d’abord un élève dans cette classe.</div>';return}
+bx.innerHTML=`<div class="card"><h2>${esc(s.name)}</h2><small style="color:var(--mu)">Notes maximales : période P, examen 2P</small><div id="tt"></div>`+c.b.map((b,i)=>{const g=G(s.id,i),M=mx(b[1]);
+return`<div class="br"><b><span>${esc(b[0])}</span><span class="pill">max P=${b[1]}</span></b><div class="g">${M.map((m,k)=>`<div><span>${L[k]} /${m}</span><input type="number" inputmode="decimal" min="0" max="${m}" value="${g[k]??''}" data-i="${i}" data-k="${k}" data-m="${m}"></div>`).join('')}</div><div style="text-align:right;font-size:13px;color:var(--mu)">T.G. <b id="tg${i}">${sum(g)??'–'}</b> / ${8*b[1]}</div></div>`}).join('')+'</div>';
+tt();
+bx.querySelectorAll('input').forEach(inp=>inp.oninput=()=>{
+let v=inp.value===''?'':Math.min(Math.max(+inp.value,0),+inp.dataset.m);if(v!==''&&+inp.value!==v)inp.value=v;
+const i=+inp.dataset.i,k=+inp.dataset.k;
+db.grades[s.id]=db.grades[s.id]||{};const a=db.grades[s.id][i]=db.grades[s.id][i]||['','','','','',''];a[k]=v;
+$('#tg'+i).textContent=sum(a)??'–';tt();save()})}
+function tt(){const c=cls(selC),p=pct(selS,c);$('#tt').innerHTML=`<div style="margin-top:8px">Total <b>${tot(selS,c)??'–'}</b> / ${maxG(c)} · <b>${p===null?'–':p.toFixed(1)+' %'}</b></div>`}
+function vBu(){
+$('#m').innerHTML=pick()+'<div id="bx"></div>';bindPick(rBu);rBu()}
+function rBu(){
+const c=cls(selC),s=stu(selS),bx=$('#bx');
+if(!s){bx.innerHTML='<div class="card empty">Aucun élève à afficher.</div>';return}
+const f=v=>v===null||v===undefined?'':v;
+let col=Array(6).fill(null),SP=0;
+const rows=c.b.map((b,i)=>{const g=G(s.id,i).map(num);SP+=b[1];
+g.length||g.push(...Array(6).fill(null));
+const s1=sum([g[0],g[1],g[2]]),s2=sum([g[3],g[4],g[5]]);
+for(let k=0;k<6;k++)if(g[k]!==null&&g[k]!==undefined)col[k]=(col[k]||0)+g[k];
+return`<tr><td>${esc(b[0])}</td><td>${b[1]}</td><td>${f(g[0])}</td><td>${f(g[1])}</td><td>${f(g[2])}</td><td>${f(s1)}</td><td>${b[1]}</td><td>${f(g[3])}</td><td>${f(g[4])}</td><td>${f(g[5])}</td><td>${f(s2)}</td><td>${f(sum(g))}</td></tr>`}).join('');
+const s1=sum(col.slice(0,3)),s2=sum(col.slice(3)),T=tot(s.id,c),p=pct(s.id,c);
+const dec=p===null?'':p>=50?'<span class="ok">PASSE</span>':'<span class="ko">DOUBLE / à réorienter</span>';
+bx.innerHTML=`<div class="sc"><div class="bul"><h3>RÉPUBLIQUE DÉMOCRATIQUE DU CONGO<br>MINISTÈRE DE L’ÉDUCATION NATIONALE ET NOUVELLE CITOYENNETÉ</h3>
+<div class="inf"><div>Province : ${esc(db.prov||'………')}</div><div>École : ${esc(db.school||'………')}</div><div>Élève : <b>${esc(s.name)}</b></div><div>Sexe : ${s.sex}</div><div>Né(e) à : ${esc(s.born||'………')}</div><div>Le : ${esc(s.date||'………')}</div><div>Classe : ${esc(c.name)}</div><div>N° perm. : ${esc(s.perm||'………')}</div></div>
+<h3 style="margin-top:8px">BULLETIN DE LA ${esc(c.name.toUpperCase())} — ANNÉE SCOLAIRE ${esc(db.year)}</h3>
+<table><tr><th rowspan="2">Branches</th><th colspan="5">Premier semestre</th><th colspan="5">Second semestre</th><th rowspan="2">T.G.</th></tr><tr><th>Max P</th><th>1re P</th><th>2e P</th><th>Exam</th><th>Tot</th><th>Max P</th><th>3e P</th><th>4e P</th><th>Exam</th><th>Tot</th></tr>${rows}
+<tr class="t"><td>Maxima généraux</td><td>${SP}</td><td>${SP}</td><td>${SP}</td><td>${2*SP}</td><td>${4*SP}</td><td>${SP}</td><td>${SP}</td><td>${SP}</td><td>${2*SP}</td><td>${4*SP}</td><td>${8*SP}</td></tr>
+<tr class="t"><td>Totaux</td><td></td>${col.slice(0,3).map(v=>`<td>${f(v)}</td>`).join('')}<td>${f(s1)}</td><td></td>${col.slice(3).map(v=>`<td>${f(v)}</td>`).join('')}<td>${f(s2)}</td><td>${f(T)}</td></tr>
+<tr class="t"><td>Pourcentage</td><td colspan="5">${s1===null?'':(s1/(4*SP)*100).toFixed(1)+' %'}</td><td colspan="5">${s2===null?'':(s2/(4*SP)*100).toFixed(1)+' %'}</td><td>${p===null?'':p.toFixed(1)+' %'}</td></tr>
+<tr class="t"><td>Place / nbre d’élèves</td><td colspan="11">${rank(s.id,c)}</td></tr></table>
+<p style="margin:8px 0 2px">Décision : ${dec||'………'} <small>(≥ 50 %, à confirmer par le conseil de classe)</small></p>
+<div style="display:flex;justify-content:space-between;margin-top:14px"><span>Signature de l’élève</span><span>Sceau de l’école</span><span>Le Chef d’Établissement</span></div></div></div>
+<button class="btn no" onclick="window.print()">Imprimer le bulletin</button>`}
+function vCl(){
+$('#m').innerHTML=`<div class="card"><h2>Classes et branches</h2><div id="cl"></div></div>
+<div class="card"><h2>Nouvelle classe</h2><label>Nom</label><input id="cn" placeholder="Ex. : 3e Humanités Électricité"><label>Branches (une par ligne : Nom:max période)</label><textarea id="cb" placeholder="Religion:10&#10;Mécanique:40&#10;Français:50"></textarea><button class="btn" id="ca">Créer la classe</button></div>`;
+$('#cl').innerHTML=db.classes.map(c=>`<div class="li"><div>${esc(c.name)}<small>${c.b.length} branches · max général ${maxG(c)} · ${inC(c.id).length} élèves</small></div><button class="btn s" onclick="delC('${c.id}')">Supprimer</button></div>`).join('');
+$('#ca').onclick=()=>{const n=$('#cn').value.trim(),b=$('#cb').value.split('\n').map(l=>l.split(':')).filter(x=>x.length==2&&+x[1]>0).map(x=>[x[0].trim(),+x[1]]);
+if(!n||!b.length){alert('Indiquez un nom et au moins une branche au format Nom:max.');return}
+db.classes.push({id:uid(),name:n,b});save();draw()}}
+function delC(id){if(inC(id).length){alert('Cette classe contient des élèves. Supprimez-les d’abord.');return}if(db.classes.length<2||!confirm('Supprimer cette classe ?'))return;db.classes=db.classes.filter(c=>c.id!==id);selC=db.classes[0].id;save();draw()}
+draw();
+</script>
+</body>
+</html>
